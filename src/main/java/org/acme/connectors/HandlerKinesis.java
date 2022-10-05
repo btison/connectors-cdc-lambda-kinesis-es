@@ -63,12 +63,19 @@ public class HandlerKinesis implements RequestHandler<KinesisEvent, String> {
 
     private void processRecord(KinesisEvent.KinesisEventRecord record) {
         ByteBuffer bb = record.getKinesis().getData();
-        log.info(gson.toJson(bb));
+        log.info("Raw data: " + gson.toJson(bb));
         if (bb.array().length == 0) {
             log.info("Tombstone record, ignoring");
             return;
         }
         JsonElement jsonElement = JsonParser.parseString(new String(bb.array()));
+        log.info("Record: " + jsonElement.toString());
+
+        JsonElement json_op = jsonElement.getAsJsonObject().get("op");
+        if (json_op == null) {
+            log.warn("Operation is null!");
+            return;
+        }
         String op = jsonElement.getAsJsonObject().get("op").getAsString();
         log.info("Operation: " + op);
         if ("c".equalsIgnoreCase(op) || "u".equalsIgnoreCase(op) || "r".equalsIgnoreCase(op)) {
